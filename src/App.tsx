@@ -7,8 +7,6 @@ import {
     HabitDetailPage,
     HabitsDashboardPage,
     OverviewPage,
-    PersonalTasksPage,
-    ProductivityPage,
     StatisticsPage,
 } from './pages';
 
@@ -22,8 +20,6 @@ function App() {
                 <Route path="/courses/:courseId" element={<CourseDetailPage />} />
                 <Route path="/calendar" element={<CalendarPage />} />
                 <Route path="/statistics" element={<StatisticsPage />} />
-                <Route path="/productivity" element={<ProductivityPage />} />
-                <Route path="/personal-tasks" element={<PersonalTasksPage />} />
 
                 {/* Habits Routes */}
                 <Route path="/habits" element={<HabitsDashboardPage />} />

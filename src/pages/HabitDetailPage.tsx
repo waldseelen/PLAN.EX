@@ -6,24 +6,32 @@ import {
     Edit2,
     Flame,
     Target,
+    Trash2,
     TrendingUp
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Button, IconButton } from '../components/ui/Button';
 import { Card, CardHeader, EmptyState, ProgressRing } from '../components/ui/Card';
+import { Input } from '../components/ui/Input';
+import { Modal } from '../components/ui/Modal';
 import { useHabits } from '../context/HabitsContext';
 import { cn, formatDateDisplay, getLastNDays } from '../lib/utils';
+import { Habit } from '../types';
 
 export function HabitDetailPage() {
     const { habitId } = useParams<{ habitId: string }>();
-    const { state, getHabitWithStats, getHabitLogs, logHabit } = useHabits();
+    const navigate = useNavigate();
+    const { state, getHabitWithStats, getHabitLogs, logHabit, updateHabit, deleteHabit } = useHabits();
 
     const habit = state.habits.find(h => h.id === habitId);
     const habitStats = habit ? getHabitWithStats(habit.id) : null;
     const logs = habit ? getHabitLogs(habit.id) : [];
 
     const [heatmapMonths] = useState(3);
+    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editFormData, setEditFormData] = useState<Partial<Habit> | null>(null);
 
     // Generate heatmap data for last N months
     const heatmapData = useMemo(() => {
@@ -111,6 +119,29 @@ export function HabitDetailPage() {
         );
     }
 
+    const openEditModal = () => {
+        if (!habit) return;
+        setEditFormData({
+            title: habit.title,
+            description: habit.description,
+            emoji: habit.emoji,
+        });
+        setIsEditModalOpen(true);
+    };
+
+    const handleEditSave = () => {
+        if (!habit || !editFormData?.title?.trim()) return;
+        updateHabit(habit.id, editFormData);
+        setIsEditModalOpen(false);
+        setEditFormData(null);
+    };
+
+    const handleDelete = () => {
+        if (!habit) return;
+        deleteHabit(habit.id);
+        navigate('/habits');
+    };
+
     const toggleToday = () => {
         const today = new Date().toISOString().split('T')[0];
         const todayLog = logs.find(l => l.dateISO === today);
@@ -141,11 +172,22 @@ export function HabitDetailPage() {
                         </div>
                     </div>
                 </div>
-                <Link to="/habits">
-                    <Button variant="secondary" leftIcon={<Edit2 className="w-4 h-4" />}>
-                        Düzenle
-                    </Button>
-                </Link>
+                <div className="flex items-center gap-2">
+                    <IconButton
+                        variant="secondary"
+                        onClick={openEditModal}
+                        title="Düzenle"
+                    >
+                        <Edit2 className="w-5 h-5" />
+                    </IconButton>
+                    <IconButton
+                        variant="danger"
+                        onClick={() => setIsDeleteConfirmOpen(true)}
+                        title="Sil"
+                    >
+                        <Trash2 className="w-5 h-5" />
+                    </IconButton>
+                </div>
             </div>
 
             {/* Stats Cards */}
@@ -291,6 +333,91 @@ export function HabitDetailPage() {
                     </Card>
                 </div>
             </div>
+
+            {/* Edit Modal */}
+            <Modal
+                isOpen={isEditModalOpen}
+                onClose={() => {
+                    setIsEditModalOpen(false);
+                    setEditFormData(null);
+                }}
+                title="Alışkanlığı Düzenle"
+            >
+                {editFormData && (
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-secondary mb-2">Emoji</label>
+                            <Input
+                                type="text"
+                                value={editFormData.emoji || ''}
+                                onChange={(e) => setEditFormData({ ...editFormData, emoji: e.target.value })}
+                                placeholder="😊"
+                                maxLength={2}
+                            />
+                        </div>
+
+                        <Input
+                            label="Başlık"
+                            value={editFormData.title || ''}
+                            onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
+                            placeholder="Alışkanlık adı..."
+                        />
+
+                        <Input
+                            label="Açıklama (isteğe bağlı)"
+                            value={editFormData.description || ''}
+                            onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                            placeholder="Alışkanlık açıklaması..."
+                        />
+
+                        <div className="flex gap-3 pt-4">
+                            <Button
+                                variant="secondary"
+                                onClick={() => {
+                                    setIsEditModalOpen(false);
+                                    setEditFormData(null);
+                                }}
+                            >
+                                İptal
+                            </Button>
+                            <Button
+                                variant="primary"
+                                onClick={handleEditSave}
+                                disabled={!editFormData.title?.trim()}
+                            >
+                                Kaydet
+                            </Button>
+                        </div>
+                    </div>
+                )}
+            </Modal>
+
+            {/* Delete Confirmation Modal */}
+            <Modal
+                isOpen={isDeleteConfirmOpen}
+                onClose={() => setIsDeleteConfirmOpen(false)}
+                title="Alışkanlığı Sil?"
+            >
+                <div className="space-y-4">
+                    <p className="text-secondary">
+                        "{habit?.title}" alışkanlığını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
+                    </p>
+                    <div className="flex gap-3">
+                        <Button
+                            variant="secondary"
+                            onClick={() => setIsDeleteConfirmOpen(false)}
+                        >
+                            İptal
+                        </Button>
+                        <Button
+                            variant="danger"
+                            onClick={handleDelete}
+                        >
+                            Evet, Sil
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 }

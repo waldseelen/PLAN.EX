@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
 import {
-    AlertTriangle,
     ArrowRight,
     BookOpen,
     Calendar,
@@ -9,9 +8,9 @@ import {
 } from 'lucide-react';
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { QuickNotes } from '../components/features/QuickNotes';
 import { Button } from '../components/ui/Button';
 import { Badge, Card, CardHeader, ProgressBar, ProgressRing } from '../components/ui/Card';
-import { useApp } from '../context/AppContext';
 import { useHabits } from '../context/HabitsContext';
 import { usePlanner } from '../context/PlannerContext';
 import { calculateCourseProgress, cn, getUpcomingExams } from '../lib/utils';
@@ -19,7 +18,6 @@ import { calculateCourseProgress, cn, getUpcomingExams } from '../lib/utils';
 export function OverviewPage() {
     const { state: plannerState } = usePlanner();
     const { getTodayHabits, state: habitsState } = useHabits();
-    const { backupWarning } = useApp();
 
     const todayHabits = getTodayHabits();
 
@@ -65,30 +63,6 @@ export function OverviewPage() {
 
     return (
         <div className="space-y-6 animate-fade-in">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-primary">Genel Bakış</h1>
-                    <p className="text-secondary mt-1">
-                        {new Date().toLocaleDateString('tr-TR', {
-                            weekday: 'long',
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                        })}
-                    </p>
-                </div>
-
-                {backupWarning && (
-                    <Link to="#" onClick={() => { }}>
-                        <Badge color="#f59e0b" className="cursor-pointer">
-                            <AlertTriangle className="w-3 h-3 mr-1" />
-                            Yedekleme önerilir
-                        </Badge>
-                    </Link>
-                )}
-            </div>
-
             {/* Stats Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
@@ -136,7 +110,7 @@ export function OverviewPage() {
                 </motion.div>
             </div>
 
-            <div className="grid lg:grid-cols-2 gap-6">
+            <div className="grid lg:grid-cols-3 gap-6 auto-rows-min">
                 {/* Course Progress */}
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
                     <Card>
@@ -307,6 +281,11 @@ export function OverviewPage() {
                             </div>
                         </div>
                     </Card>
+                </motion.div>
+
+                {/* Quick Notes */}
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9 }}>
+                    <QuickNotes />
                 </motion.div>
             </div>
         </div>

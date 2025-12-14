@@ -128,6 +128,7 @@ export function HabitsDashboardPage() {
 
     const openEditModal = (habit: Habit) => {
         setEditingHabit(habit);
+        setIsAddModalOpen(true);
         setFormData({
             title: habit.title,
             description: habit.description || '',

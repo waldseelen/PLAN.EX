@@ -34,6 +34,17 @@ export const ExamSchema = z.object({
 });
 export type Exam = z.infer<typeof ExamSchema>;
 
+// Calendar Event (generic events for calendar)
+export const CalendarEventSchema = z.object({
+    id: z.string(),
+    title: z.string().max(200),
+    dateISO: z.string(),
+    description: z.string().optional(),
+    color: z.string().optional(),
+    type: z.enum(['event', 'reminder', 'deadline']).default('event'),
+});
+export type CalendarEvent = z.infer<typeof CalendarEventSchema>;
+
 export const CourseSchema = z.object({
     id: z.string(),
     code: z.string().optional(),

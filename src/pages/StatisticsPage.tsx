@@ -1,9 +1,28 @@
-import { BarChart3, CheckCircle, Target, TrendingUp } from 'lucide-react';
+import { BarChart3, CheckCircle, Target, Timer, TrendingUp } from 'lucide-react';
 import { useMemo } from 'react';
 import { Card, CardHeader, ProgressBar, ProgressRing } from '../components/ui/Card';
 import { useHabits } from '../context/HabitsContext';
 import { usePlanner } from '../context/PlannerContext';
-import { getLastNDays } from '../lib/utils';
+import { formatDuration, getLastNDays } from '../lib/utils';
+
+// Get Pomodoro sessions from localStorage
+function getPomodoroStats() {
+    try {
+        const storedSessions = JSON.parse(localStorage.getItem('pomodoroSessions') || '{}');
+        const today = new Date().toISOString().split('T')[0];
+        const todaySessions = storedSessions[today] || 0;
+
+        // Calculate total sessions
+        let totalSessions = 0;
+        Object.values(storedSessions).forEach((count: any) => {
+            totalSessions += count;
+        });
+
+        return { todaySessions, totalSessions };
+    } catch {
+        return { todaySessions: 0, totalSessions: 0 };
+    }
+}
 
 export function StatisticsPage() {
     const { state: plannerState } = usePlanner();
@@ -137,14 +156,37 @@ export function StatisticsPage() {
 
                 <Card className="text-center">
                     <div className="p-3 rounded-full bg-orange-500/10 w-fit mx-auto mb-3">
-                        <BarChart3 className="w-6 h-6 text-orange-500" />
+                        <Timer className="w-6 h-6 text-orange-500" />
                     </div>
-                    <p className="text-2xl font-bold text-primary">{overallStats.totalCourses}</p>
-                    <p className="text-sm text-secondary">Aktif Ders</p>
+                    <p className="text-2xl font-bold text-primary">{getPomodoroStats().todaySessions}</p>
+                    <p className="text-sm text-secondary">Bugünkü Pomodoro</p>
                 </Card>
             </div>
 
             <div className="grid lg:grid-cols-2 gap-6">
+                {/* Pomodoro Summary */}
+                <Card>
+                    <CardHeader title="Pomodoro Özeti" subtitle="Çalışma istatistikleri" />
+                    <div className="grid grid-cols-2 gap-4 mt-4">
+                        <div className="p-4 bg-secondary rounded-lg text-center">
+                            <Timer className="w-8 h-8 text-orange-500 mx-auto mb-2" />
+                            <p className="text-2xl font-bold text-primary">{getPomodoroStats().todaySessions}</p>
+                            <p className="text-sm text-secondary">Bugün</p>
+                        </div>
+                        <div className="p-4 bg-secondary rounded-lg text-center">
+                            <BarChart3 className="w-8 h-8 text-blue-500 mx-auto mb-2" />
+                            <p className="text-2xl font-bold text-primary">{getPomodoroStats().totalSessions}</p>
+                            <p className="text-sm text-secondary">Toplam</p>
+                        </div>
+                    </div>
+                    <div className="mt-4 p-4 bg-secondary rounded-lg">
+                        <div className="flex justify-between items-center">
+                            <span className="text-secondary">Bugünkü Çalışma Süresi</span>
+                            <span className="font-bold text-primary">{formatDuration(getPomodoroStats().todaySessions * 25 * 60)}</span>
+                        </div>
+                    </div>
+                </Card>
+
                 {/* Weekly Activity Chart */}
                 <Card>
                     <CardHeader title="Haftalık Aktivite" subtitle="Son 7 günlük tamamlama" />

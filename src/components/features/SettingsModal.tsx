@@ -1,6 +1,5 @@
 import {
     AlertTriangle,
-    Clock,
     Download,
     Keyboard,
     Upload,
@@ -18,17 +17,16 @@ import { Input, Select } from '../ui/Input';
 import { Modal } from '../ui/Modal';
 
 export function SettingsModal() {
-    const { isSettingsOpen, setIsSettingsOpen, settings, updateSettings, addToast } = useApp();
+    const { isSettingsOpen, setIsSettingsOpen, settings, updateSettings, addToast, backupWarning } = useApp();
     const { state: plannerState, importData } = usePlanner();
     const { state: habitsState, importHabits } = useHabits();
 
-    const [activeTab, setActiveTab] = useState<'general' | 'pomodoro' | 'backup' | 'shortcuts'>('general');
+    const [activeTab, setActiveTab] = useState<'general' | 'backup' | 'shortcuts'>('general');
     const [isExporting, setIsExporting] = useState(false);
     const [isImporting, setIsImporting] = useState(false);
 
     const tabs = [
         { id: 'general', label: 'Genel', icon: <Volume2 className="w-4 h-4" /> },
-        { id: 'pomodoro', label: 'Pomodoro', icon: <Clock className="w-4 h-4" /> },
         { id: 'backup', label: 'Yedekleme', icon: <Download className="w-4 h-4" /> },
         { id: 'shortcuts', label: 'Kısayollar', icon: <Keyboard className="w-4 h-4" /> },
     ] as const;
@@ -82,7 +80,7 @@ export function SettingsModal() {
             // Import planner data
             importData(backup.courses, backup.completionState, backup.personalTasks);
 
-            // Import habits (logs would need to be handled separately if included)
+            // Import habits
             if (backup.habits) {
                 importHabits(backup.habits, []);
             }
@@ -99,7 +97,6 @@ export function SettingsModal() {
             addToast('error', 'Yedekleme geri yüklenemedi. Dosya formatını kontrol edin.');
         } finally {
             setIsImporting(false);
-            // Reset input
             event.target.value = '';
         }
     };
@@ -107,10 +104,9 @@ export function SettingsModal() {
     const shortcuts = [
         { keys: 'Ctrl + K', description: 'Arama' },
         { keys: 'Ctrl + ,', description: 'Ayarlar' },
-        { keys: 'Ctrl + S', description: 'Yedekle' },
+        { keys: 'Ctrl + P', description: 'Pomodoro' },
         { keys: 'Ctrl + Z', description: 'Geri Al' },
         { keys: 'Ctrl + Shift + D', description: 'Tema Değiştir' },
-        { keys: 'Ctrl + N', description: 'Hızlı Görev Ekle' },
         { keys: 'Escape', description: 'Modal Kapat' },
     ];
 
@@ -206,95 +202,19 @@ export function SettingsModal() {
                         </div>
                     )}
 
-                    {/* Pomodoro */}
-                    {activeTab === 'pomodoro' && (
-                        <div className="space-y-4">
-                            <Input
-                                type="number"
-                                label="Çalışma süresi (dakika)"
-                                value={settings.pomodoro.workDuration}
-                                onChange={(e) =>
-                                    updateSettings({
-                                        pomodoro: { ...settings.pomodoro, workDuration: parseInt(e.target.value) || 25 },
-                                    })
-                                }
-                                min={1}
-                                max={120}
-                            />
-
-                            <Input
-                                type="number"
-                                label="Kısa mola (dakika)"
-                                value={settings.pomodoro.shortBreakDuration}
-                                onChange={(e) =>
-                                    updateSettings({
-                                        pomodoro: { ...settings.pomodoro, shortBreakDuration: parseInt(e.target.value) || 5 },
-                                    })
-                                }
-                                min={1}
-                                max={60}
-                            />
-
-                            <Input
-                                type="number"
-                                label="Uzun mola (dakika)"
-                                value={settings.pomodoro.longBreakDuration}
-                                onChange={(e) =>
-                                    updateSettings({
-                                        pomodoro: { ...settings.pomodoro, longBreakDuration: parseInt(e.target.value) || 15 },
-                                    })
-                                }
-                                min={1}
-                                max={120}
-                            />
-
-                            <Input
-                                type="number"
-                                label="Uzun mola öncesi oturum sayısı"
-                                value={settings.pomodoro.sessionsUntilLongBreak}
-                                onChange={(e) =>
-                                    updateSettings({
-                                        pomodoro: { ...settings.pomodoro, sessionsUntilLongBreak: parseInt(e.target.value) || 4 },
-                                    })
-                                }
-                                min={1}
-                                max={10}
-                            />
-
-                            <label className="flex items-center gap-3 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={settings.pomodoro.autoStartBreaks}
-                                    onChange={(e) =>
-                                        updateSettings({
-                                            pomodoro: { ...settings.pomodoro, autoStartBreaks: e.target.checked },
-                                        })
-                                    }
-                                    className="w-4 h-4 rounded border-default text-[var(--color-accent)] focus:ring-[var(--color-accent)]"
-                                />
-                                <span className="text-secondary">Molaları otomatik başlat</span>
-                            </label>
-
-                            <label className="flex items-center gap-3 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={settings.pomodoro.autoStartWork}
-                                    onChange={(e) =>
-                                        updateSettings({
-                                            pomodoro: { ...settings.pomodoro, autoStartWork: e.target.checked },
-                                        })
-                                    }
-                                    className="w-4 h-4 rounded border-default text-[var(--color-accent)] focus:ring-[var(--color-accent)]"
-                                />
-                                <span className="text-secondary">Çalışmayı otomatik başlat</span>
-                            </label>
-                        </div>
-                    )}
-
                     {/* Backup */}
                     {activeTab === 'backup' && (
                         <div className="space-y-6">
                             {/* Backup Warning */}
+                            {backupWarning && (
+                                <div className="flex items-center gap-3 p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+                                    <AlertTriangle className="w-5 h-5 text-yellow-500 flex-shrink-0" />
+                                    <p className="text-sm text-yellow-600 dark:text-yellow-400">
+                                        Yedekleme önerilir! Verilerinizi düzenli olarak yedekleyin.
+                                    </p>
+                                </div>
+                            )}
+
                             {settings.lastBackupISO && (
                                 <div className="p-4 rounded-lg bg-secondary">
                                     <p className="text-sm text-secondary">
@@ -309,7 +229,7 @@ export function SettingsModal() {
                                 </div>
                             )}
 
-                            {!settings.lastBackupISO && (
+                            {!settings.lastBackupISO && !backupWarning && (
                                 <div className="flex items-center gap-3 p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
                                     <AlertTriangle className="w-5 h-5 text-yellow-500" />
                                     <p className="text-sm text-yellow-600 dark:text-yellow-400">
@@ -345,9 +265,8 @@ export function SettingsModal() {
                                 <p className="text-sm text-secondary mb-2">Yedekleme şunları içerir:</p>
                                 <ul className="text-sm text-tertiary space-y-1 list-disc list-inside">
                                     <li>Tüm dersler ve görevler</li>
-                                    <li>Sınav tarihleri</li>
+                                    <li>Sınav tarihleri ve etkinlikler</li>
                                     <li>Tamamlanma durumları</li>
-                                    <li>Kişisel görevler</li>
                                     <li>Alışkanlıklar</li>
                                     <li>Ayarlar</li>
                                 </ul>

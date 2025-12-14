@@ -4,7 +4,5 @@ export { CoursesPage } from './CoursesPage';
 export { HabitDetailPage } from './HabitDetailPage';
 export { HabitsDashboardPage } from './HabitsDashboardPage';
 export { OverviewPage } from './OverviewPage';
-export { PersonalTasksPage } from './PersonalTasksPage';
-export { ProductivityPage } from './ProductivityPage';
 export { StatisticsPage } from './StatisticsPage';
 
